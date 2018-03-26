@@ -11,7 +11,13 @@ class GrowTower:
     Compute a few, transfering logic in here it totally okay.
     """
 
-    def __init__(self, dual=False, inner_radius=22, tube_z_offset=4, tube_height=100, cham_len=0.5):
+    def __init__(self,
+                 dual=False,
+                 inner_radius=22,
+                 tube_z_offset=4,
+                 tube_height=100,
+                 cham_len=0.5,
+                 bottom_cap_hole_ledge=5):
         self.main_thickness = 6.5
         self.inner_radius = 43.5
         self.outer_radius = self.inner_radius + self.main_thickness
@@ -39,6 +45,71 @@ class GrowTower:
         self.tube_z_offset = tube_z_offset
         self.dual = dual
         self.cham_len = cham_len
+        self.cap_thickness = 10
+        self.bar_length = 100
+        self.bar_width = 30
+        self.hole_radius = 5
+        self.hole_offset = 7
+        self.bottom_cap_hole_ledge = bottom_cap_hole_ledge
+        self.bottom_cap_hole_radius = self.inner_radius - self.bottom_cap_hole_ledge
+        self.handle_radius = 5
+        self.handle_width = 2
+
+    def make_cap(self, bottom=True):
+        """
+        """
+        cut_tower = self.make_em_stack(self.make_raw_tower())
+        outer_radius = self.outer_radius
+        cap_thickness = self.cap_thickness
+        bar_length = self.bar_length
+        bar_width = self.bar_width
+        hole_radius = self.hole_radius
+        hole_offset = self.hole_offset
+        bottom_cap_hole_radius = self.bottom_cap_hole_radius
+        tower_height = self.tower_height
+        handle_radius = self.handle_radius
+        handle_width = self.handle_width
+
+        cap = Part.makeBox(bar_width, bar_length, cap_thickness,
+                           vec(-bar_width/2, -bar_length/2, -cap_thickness/2))
+
+        end1 = Part.makeCylinder(bar_width/2, cap_thickness,
+                           vec(0, -bar_length/2, -cap_thickness/2))
+
+        end2 = Part.makeCylinder(bar_width/2, cap_thickness,
+                           vec(0, bar_length/2, -cap_thickness/2))
+
+        cap_plate = Part.makeCylinder(outer_radius, cap_thickness,
+                           vec(0,0,-cap_thickness/2))
+
+        cap = cap.fuse(end1).fuse(end2).fuse(cap_plate)
+
+        hole1 = Part.makeCylinder(hole_radius, cap_thickness,
+                                  vec(0, -bar_length/2 - hole_offset, -cap_thickness/2))
+
+        hole2 = Part.makeCylinder(hole_radius, cap_thickness,
+                                  vec(0, bar_length/2 + hole_offset, -cap_thickness/2))
+
+        holes = hole1.fuse(hole2)
+        cap = cap.cut(holes)
+
+        if bottom:
+            cap = cap.cut(cut_tower)
+            bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
+            cap = cap.cut(bottom_cutout)
+            return cap
+        else:
+            cap.translate(vec(0, 0, tower_height))
+            cap = cap.cut(tower)
+            viewhole_1 = Part.makeCylinder(25, cap_thickness/2, vec(0,0,tower_height))
+            viewhole_2 = Part.makeCylinder(20, cap_thickness, vec(0,0, tower_height - cap_thickness/2))
+            viewhole = viewhole_1.fuse(viewhole_2)
+            cap = cap.cut(viewhole)
+            handle = Part.makeCylinder(handle_radius,handle_width)
+            handle.rotate(vec(0,0,handle_width/2), vec(0,1,0), 90)
+            handle.translate(vec(0,0,tower_height+handle_radius/2))
+            viewhole = viewhole.fuse(handle)
+            return cap, viewhole
 
 
     def move_tube(self, part, flip=False):
@@ -181,20 +252,25 @@ class GrowTower:
         return both_cut_cham
 
 
-    def notch_it(self, tower_shell):
+    def notch_it(self, tower_shell, inverse=False):
         """
         Using small spheres, create notches and notch cutouts to lock towers
         into a repeatable configuration. Keep them from sliding around z-axis.
         """
         bottom_radius = self.bottom_cutaround_radius
         cutout_height = self.cutout_height
-        bottom_notch_radius = 1 - self.tolerance / 2
+        if not inverse:
+            bottom_notch_radius = 1 - self.tolerance / 2
+            top_notch_radius = 1 + self.tolerance / 2
+        else:
+            bottom_notch_radius = 1 + self.tolerance / 2
+            top_notch_radius = 1 - self.tolerance / 2
+
         bottom_notch = Part.makeSphere(bottom_notch_radius,
                                        vec(bottom_radius, 0, cutout_height))
 
         # The notches on the top need some elementary trig to calculate their position.
         top_radius = self.top_cutout_radius
-        top_notch_radius = 1 + self.tolerance / 2
         angle = self.notch_angle
         x_coord_1 = top_radius * math.cos(angle)
         x_coord_2 = top_radius * math.cos(-angle)
