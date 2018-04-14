@@ -13,7 +13,7 @@ class GrowTower:
 
     def __init__(self,
                  dual=False,
-                 inner_radius=22,
+                 inner_tube_radius=24,
                  tube_z_offset=4,
                  tube_height=100,
                  cham_len=0.5,
@@ -23,7 +23,7 @@ class GrowTower:
         self.outer_radius = self.inner_radius + self.main_thickness
         self.tower_height = 100
         self.tube_thickness = 6
-        self.inner_tube_radius = inner_radius
+        self.inner_tube_radius = inner_tube_radius
         self.outer_tube_radius = self.inner_tube_radius + self.tube_thickness
         self.tube_height = tube_height
         self.destructor_radius = self.outer_tube_radius + 20
@@ -40,8 +40,8 @@ class GrowTower:
                                        self.cutout_thickness - \
                                        self.tolerance/2
         self.notch_angle = math.pi/3
-        self.tube_angle = 40
-        self.tube_x_offset = 10
+        self.tube_angle = 45
+        self.tube_x_offset = 4
         self.tube_z_offset = tube_z_offset
         self.dual = dual
         self.cham_len = cham_len
@@ -235,8 +235,8 @@ class GrowTower:
         pan = Part.makeCylinder(top_cutout_radius, cutout_height)
         pan.translate(vec(0, 0, move_up))
         # chamfer Edge 3.
-        cham_pan = self.chamfer_me_baby(pan, [3], cham_len=cham_len)
-        cut_top = tower_shell.cut(cham_pan)
+        #cham_pan = self.chamfer_me_baby(pan, [3], cham_len=cham_len)
+        cut_top = tower_shell.cut(pan)
 
         # CUT AROUND THE OUTER SURFACE ON BOTTOM. WATER GOES DOWN.
         # Make it in deeper by tolerance/2
@@ -247,9 +247,9 @@ class GrowTower:
         bottom_ring = outer_ring.cut(inner_volume)
         # chamfer Edge 4
         both_cut = cut_top.cut(bottom_ring)
-        both_cut_cham = self.chamfer_me_baby(both_cut, [35], cham_len=cham_len)
+        # both_cut_cham = self.chamfer_me_baby(both_cut, [35], cham_len=cham_len)
 
-        return both_cut_cham
+        return both_cut
 
 
     def notch_it(self, tower_shell, inverse=False):
