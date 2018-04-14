@@ -186,6 +186,28 @@ class GrowTower:
         App.getDocument("Unnamed").removeObject("myPart")
         return res
 
+    def fillet_me_baby(self, part, edges=[], fillet_lens=[1.0,1.0]):
+        """
+        Helper function to chamfer edges given their numbers and chamfer length.
+        """
+        myPart = FreeCAD.ActiveDocument.addObject("Part::Feature", "myPart")
+        myPart.Shape = part
+        fillet = FreeCAD.ActiveDocument.addObject("Part::Fillet", "myFillet")
+        fillet.Base = FreeCAD.ActiveDocument.myPart
+        myEdges = []
+        if len(edges) > 0:
+            for edge in edges:
+                myEdges.append((edge, fillet_lens[0], fillet_lens[1]))
+        else:
+            return None
+        FreeCAD.ActiveDocument.myFillet.Edges = myEdges
+        FreeCAD.ActiveDocument.recompute()
+        FreeCADGui.ActiveDocument.myPart.Visibility = False
+        res = FreeCADGui.ActiveDocument.myFillet.Object.Shape
+        App.getDocument("Unnamed").removeObject("myFillet")
+        App.getDocument("Unnamed").removeObject("myPart")
+        return res
+
     def chamfer_my_tube(self, tower):
         chamed_tube = chamfer_me_baby()
 
@@ -304,8 +326,13 @@ class GrowTower:
         """
         raw_tower = self.make_raw_tower()
         cut_tower = self.make_em_stack(raw_tower)
-        # chammed = self.chamfer_me_baby(cut_tower)
-        # finished_tower = cut_tower
-        finished_tower = self.notch_it(cut_tower)
-        self.finished_tower = finished_tower
-        return finished_tower
+        if not self.dual:
+            edges = [2,18]
+        else:
+            edges = [32,35] # different designs, different edge numbers
+        filleted_tower = self.fillet_me_baby(
+            cut_tower, edges=edges, fillet_lens=[0.5,0.5]
+            )
+        self.finished_tower = self.notch_it(filleted_tower)
+
+        return self.finished_tower
