@@ -55,7 +55,7 @@ class GrowTower:
         self.handle_radius = 5
         self.handle_width = 2
 
-    def make_cap(self, bottom=True):
+    def make_cap(self, bottom=True,chammed=True):
         """
         """
         cut_tower = self.make_em_stack(self.make_raw_tower())
@@ -97,6 +97,10 @@ class GrowTower:
             cap = cap.cut(cut_tower)
             bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
             cap = cap.cut(bottom_cutout)
+            if chammed:
+                edges = [edge for edge in range(75,84)]
+                cap = self.chamfer_me_baby(cap, edges, cham_lens=[9.0,3.0])
+
             return cap
         else:
             cap.translate(vec(0, 0, tower_height))
@@ -160,7 +164,7 @@ class GrowTower:
         return tube_destructor
 
 
-    def chamfer_me_baby(self, part, edges=[], cham_len=1.0):
+    def chamfer_me_baby(self, part, edges=[], cham_lens=[1.0,1.0]):
         """
         Helper function to chamfer edges given their numbers and chamfer length.
         """
@@ -171,7 +175,7 @@ class GrowTower:
         myEdges = []
         if len(edges) > 0:
             for edge in edges:
-                myEdges.append((edge, cham_len, cham_len))
+                myEdges.append((edge, cham_lens[0], cham_lens[1]))
         else:
             return None
         FreeCAD.ActiveDocument.myChamfer.Edges = myEdges
@@ -181,6 +185,9 @@ class GrowTower:
         App.getDocument("Unnamed").removeObject("myChamfer")
         App.getDocument("Unnamed").removeObject("myPart")
         return res
+
+    def chamfer_my_tube(self, tower):
+        chamed_tube = chamfer_me_baby()
 
 
     def make_raw_tower(self):
@@ -235,7 +242,7 @@ class GrowTower:
         pan = Part.makeCylinder(top_cutout_radius, cutout_height)
         pan.translate(vec(0, 0, move_up))
         # chamfer Edge 3.
-        #cham_pan = self.chamfer_me_baby(pan, [3], cham_len=cham_len)
+        #cham_pan = self.chamfer_me_baby(pan, [3], cham_lens=[cham_len, cham_len])
         cut_top = tower_shell.cut(pan)
 
         # CUT AROUND THE OUTER SURFACE ON BOTTOM. WATER GOES DOWN.
@@ -247,7 +254,7 @@ class GrowTower:
         bottom_ring = outer_ring.cut(inner_volume)
         # chamfer Edge 4
         both_cut = cut_top.cut(bottom_ring)
-        # both_cut_cham = self.chamfer_me_baby(both_cut, [35], cham_len=cham_len)
+        # both_cut_cham = self.chamfer_me_baby(both_cut, [35], cham_lens=[cham_len,cham_len])
 
         return both_cut
 
