@@ -4,7 +4,6 @@ import math
 
 vec = Base.Vector
 
-
 class GrowTower:
     """
     Store all the constants in here that you need to access for later steps.
@@ -12,12 +11,13 @@ class GrowTower:
     """
 
     def __init__(self,
-                 dual=False,
-                 inner_tube_radius=24,
-                 tube_z_offset=4,
-                 tube_height=100,
-                 cham_len=0.5,
-                 bottom_cap_hole_ledge=5):
+        dual=False,
+        inner_tube_radius=24,
+        tube_z_offset=4,
+        tube_height=100,
+        cham_len=0.5,
+        bottom_cap_hole_ledge=5,
+    ):
         self.main_thickness = 6.5
         self.inner_radius = 43.5
         self.outer_radius = self.inner_radius + self.main_thickness
@@ -209,7 +209,7 @@ class GrowTower:
         return res
 
     def chamfer_my_tube(self, tower):
-        chamed_tube = chamfer_me_baby()
+        chamed_tube = self.chamfer_me_baby()
 
 
     def make_raw_tower(self):
@@ -281,58 +281,20 @@ class GrowTower:
         return both_cut
 
 
-    def notch_it(self, tower_shell, inverse=False):
-        """
-        Using small spheres, create notches and notch cutouts to lock towers
-        into a repeatable configuration. Keep them from sliding around z-axis.
-        """
-        bottom_radius = self.bottom_cutaround_radius
-        cutout_height = self.cutout_height
-        if not inverse:
-            bottom_notch_radius = 1 - self.tolerance / 2
-            top_notch_radius = 1 + self.tolerance / 2
-        else:
-            bottom_notch_radius = 1 + self.tolerance / 2
-            top_notch_radius = 1 - self.tolerance / 2
-
-        bottom_notch = Part.makeSphere(bottom_notch_radius,
-                                       vec(bottom_radius, 0, cutout_height))
-
-        # The notches on the top need some elementary trig to calculate their position.
-        top_radius = self.top_cutout_radius
-        angle = self.notch_angle
-        x_coord_1 = top_radius * math.cos(angle)
-        x_coord_2 = top_radius * math.cos(-angle)
-        y_coord_1 = top_radius * math.sin(angle)
-        y_coord_2 = top_radius * math.sin(-angle)
-        z_coord = self.tower_height
-        top_notch_1 = Part.makeSphere(top_notch_radius,
-                                      vec(x_coord_1, y_coord_1, z_coord))
-        top_notch_2 = Part.makeSphere(top_notch_radius,
-                                      vec(x_coord_2, y_coord_2, z_coord))
-
-        # Now add the bottom notch.
-        tower_shell_1 = tower_shell.fuse(bottom_notch)
-
-        # Cut out notches on top.
-        tower_shell_2 = tower_shell_1.cut(top_notch_1)
-        tower_shell_final = tower_shell_2.cut(top_notch_2)
-        return tower_shell_final
-
-
     def make_it_all(self):
         """
         make a raw tower, cut out rings, and notch.
         """
         raw_tower = self.make_raw_tower()
         cut_tower = self.make_em_stack(raw_tower)
+
         if not self.dual:
             edges = [2,18]
         else:
-            edges = [32,35] # different designs, different edge numbers
-        filleted_tower = self.fillet_me_baby(
-            cut_tower, edges=edges, fillet_lens=[0.5,0.5]
+            edges = [6,14] # different designs, different edge numbers
+        filleted_tower = self.chamfer_me_baby(
+            cut_tower, edges=edges, cham_lens=[2.3,2.3]
             )
-        self.finished_tower = self.notch_it(filleted_tower)
+        # self.finished_tower = self.notch_it(filleted_tower)
 
-        return self.finished_tower
+        return filleted_tower
