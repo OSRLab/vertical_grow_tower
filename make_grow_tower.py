@@ -4,6 +4,7 @@ import math
 
 vec = Base.Vector
 
+
 class GrowTower:
     """
     Store all the constants in here that you need to access for later steps.
@@ -289,12 +290,14 @@ class GrowTower:
         cut_tower = self.make_em_stack(raw_tower)
 
         if not self.dual:
-            edges = [2,18]
+            edges = [5,7]
         else:
             edges = [6,14] # different designs, different edge numbers
+        
         filleted_tower = self.chamfer_me_baby(
-            cut_tower, edges=edges, cham_lens=[2.3,2.3]
+            cut_tower, edges=edges, cham_lens=[2.3, 2.3]
             )
-        # self.finished_tower = self.notch_it(filleted_tower)
 
         return filleted_tower
+
+
