@@ -50,16 +50,16 @@ class GrowTower:
         self.bar_length = 100
         self.bar_width = 30
         self.hole_radius = 5
-        self.hole_offset = 7
+        self.hole_offset = 3
         self.bottom_cap_hole_ledge = bottom_cap_hole_ledge
         self.bottom_cap_hole_radius = self.inner_radius - self.bottom_cap_hole_ledge
         self.handle_radius = 5
         self.handle_width = 2
 
-    def make_cap(self, bottom=True,chammed=True):
+    def make_cap(self, bottom=True):
         """
         """
-        cut_tower = self.make_em_stack(self.make_raw_tower())
+        cut_tower = self.make_it_all()
         outer_radius = self.outer_radius
         cap_thickness = self.cap_thickness
         bar_length = self.bar_length
@@ -71,50 +71,67 @@ class GrowTower:
         handle_radius = self.handle_radius
         handle_width = self.handle_width
 
-        cap = Part.makeBox(bar_width, bar_length, cap_thickness,
-                           vec(-bar_width/2, -bar_length/2, -cap_thickness/2))
+        # cap = Part.makeBox(bar_width, bar_length, cap_thickness,
+        #                    vec(-bar_width/2, -bar_length/2, -cap_thickness/2))
 
-        end1 = Part.makeCylinder(bar_width/2, cap_thickness,
-                           vec(0, -bar_length/2, -cap_thickness/2))
+        # end1 = Part.makeCylinder(bar_width/2, cap_thickness,
+        #                    vec(0, -bar_length/2, -cap_thickness/2))
 
-        end2 = Part.makeCylinder(bar_width/2, cap_thickness,
-                           vec(0, bar_length/2, -cap_thickness/2))
+        # end2 = Part.makeCylinder(bar_width/2, cap_thickness,
+        #                    vec(0, bar_length/2, -cap_thickness/2))
 
         cap_plate = Part.makeCylinder(outer_radius, cap_thickness,
                            vec(0,0,-cap_thickness/2))
 
-        cap = cap.fuse(end1).fuse(end2).fuse(cap_plate)
-
-        hole1 = Part.makeCylinder(hole_radius, cap_thickness,
-                                  vec(0, -bar_length/2 - hole_offset, -cap_thickness/2))
-
-        hole2 = Part.makeCylinder(hole_radius, cap_thickness,
-                                  vec(0, bar_length/2 + hole_offset, -cap_thickness/2))
-
-        holes = hole1.fuse(hole2)
-        cap = cap.cut(holes)
-
+        # cap = cap.fuse(end1).fuse(end2).fuse(cap_plate)
         if bottom:
-            cap = cap.cut(cut_tower)
-            bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
-            cap = cap.cut(bottom_cutout)
-            if chammed:
-                edges = [edge for edge in range(75,84)]
-                cap = self.chamfer_me_baby(cap, edges, cham_lens=[9.0,3.0])
+            hole1 = Part.makeCylinder(hole_radius, cap_thickness,
+                vec(0, -bar_length/3 - hole_offset, -cap_thickness/2))
 
+            hole2 = Part.makeCylinder(hole_radius, cap_thickness,
+                vec(0, bar_length/3 + hole_offset, -cap_thickness/2))
+            bottom_cutout = Part.makeCylinder(30, 2*cap_thickness, vec(0,0,-cap_thickness/2) )
+
+            holes = hole1.fuse(hole2)
+            bottom_holes = holes.fuse(bottom_cutout)
+            whole_thing = bottom_holes.fuse(cut_tower)
+            cap = cap_plate.cut(whole_thing)
             return cap
         else:
-            cap.translate(vec(0, 0, tower_height))
-            cap = cap.cut(tower)
-            viewhole_1 = Part.makeCylinder(25, cap_thickness/2, vec(0,0,tower_height))
-            viewhole_2 = Part.makeCylinder(20, cap_thickness, vec(0,0, tower_height - cap_thickness/2))
-            viewhole = viewhole_1.fuse(viewhole_2)
-            cap = cap.cut(viewhole)
-            handle = Part.makeCylinder(handle_radius,handle_width)
-            handle.rotate(vec(0,0,handle_width/2), vec(0,1,0), 90)
-            handle.translate(vec(0,0,tower_height+handle_radius/2))
-            viewhole = viewhole.fuse(handle)
-            return cap, viewhole
+            cap_plate.translate(vec(0, 0, tower_height))
+            hole1 = Part.makeCylinder(hole_radius, cap_thickness,
+                vec(0, -bar_length/3 - hole_offset, tower_height-cap_thickness/2))
+
+            hole2 = Part.makeCylinder(hole_radius, cap_thickness,
+                vec(0, bar_length/3 + hole_offset, tower_height-cap_thickness/2))
+            top_cutout = Part.makeCylinder(5, 2*cap_thickness, vec(0,0,tower_height-cap_thickness/2))
+            holes = hole1.fuse(hole2)
+            all_holes = holes.fuse(top_cutout)
+            whole_thing = all_holes.fuse(cut_tower)
+            cap = cap_plate.cut(whole_thing)
+            return cap            
+        # if bottom:
+        #     cap = cap.cut(cut_tower)
+        #     bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
+        #     cap = cap.cut(bottom_cutout)
+        #     if chammed:
+        #         # edges = [edge for edge in range(75,84)]
+        #         edges = [16, 17, 53, 54, 55, 56, 57, 58, 50]
+        #         cap = self.chamfer_me_baby(cap, edges, cham_lens=[2.3, 2.3])
+
+        #     return cap
+        # else:
+        #     cap.translate(vec(0, 0, tower_height))
+        #     cap = cap.cut(tower)
+        #     viewhole_1 = Part.makeCylinder(25, cap_thickness/2, vec(0,0,tower_height))
+        #     viewhole_2 = Part.makeCylinder(20, cap_thickness, vec(0,0, tower_height - cap_thickness/2))
+        #     viewhole = viewhole_1.fuse(viewhole_2)
+        #     cap = cap.cut(viewhole)
+        #     handle = Part.makeCylinder(handle_radius,handle_width)
+        #     handle.rotate(vec(0,0,handle_width/2), vec(0,1,0), 90)
+        #     handle.translate(vec(0,0,tower_height+handle_radius/2))
+        #     viewhole = viewhole.fuse(handle)
+        #     return cap, viewhole
 
 
     def move_tube(self, part, flip=False):
