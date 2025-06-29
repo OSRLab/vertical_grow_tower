@@ -71,6 +71,18 @@ class GrowTower:
         handle_radius = self.handle_radius
         handle_width = self.handle_width
 
+        # cut_tower = gt.make_it_all()
+        # outer_radius = gt.outer_radius
+        # cap_thickness = gt.cap_thickness
+        # bar_length = gt.bar_length
+        # bar_width = gt.bar_width
+        # hole_radius = gt.hole_radius
+        # hole_offset = gt.hole_offset
+        # bottom_cap_hole_radius = gt.bottom_cap_hole_radius
+        # tower_height = gt.tower_height
+        # handle_radius = gt.handle_radius
+        # handle_width = gt.handle_width
+
         # cap = Part.makeBox(bar_width, bar_length, cap_thickness,
         #                    vec(-bar_width/2, -bar_length/2, -cap_thickness/2))
 
@@ -81,7 +93,7 @@ class GrowTower:
         #                    vec(0, bar_length/2, -cap_thickness/2))
 
         cap_plate = Part.makeCylinder(outer_radius, cap_thickness,
-                           vec(0,0,-cap_thickness/2))
+                    vec(0,0,-cap_thickness/2))
 
         # cap = cap.fuse(end1).fuse(end2).fuse(cap_plate)
         if bottom:
@@ -96,20 +108,30 @@ class GrowTower:
             bottom_holes = holes.fuse(bottom_cutout)
             whole_thing = bottom_holes.fuse(cut_tower)
             cap = cap_plate.cut(whole_thing)
-            return cap
+            # return cap
         else:
+            # Make the viewing cap
+            cap_cutout = Part.makeCylinder(20, cap_thickness, vec(0, 0, tower_height - cap_thickness/2))
+            # Edge is Numero Tres
+            edges = [3]
+            radii = [5, 5]
+            chammed_cut = self.chamfer_me_baby(cap_cutout, edges, radii)
+
             cap_plate.translate(vec(0, 0, tower_height))
+            cut_plate = cap_plate.cut(chammed_cut)
+            top_cutout = Part.makeCylinder(5, 2*cap_thickness, vec(0,0,tower_height-cap_thickness/2))
+            chammed_holed_cut = chammed_cut.cut(top_cutout)
+
             hole1 = Part.makeCylinder(hole_radius, cap_thickness,
                 vec(0, -bar_length/3 - hole_offset, tower_height-cap_thickness/2))
 
             hole2 = Part.makeCylinder(hole_radius, cap_thickness,
                 vec(0, bar_length/3 + hole_offset, tower_height-cap_thickness/2))
-            top_cutout = Part.makeCylinder(5, 2*cap_thickness, vec(0,0,tower_height-cap_thickness/2))
             holes = hole1.fuse(hole2)
-            all_holes = holes.fuse(top_cutout)
-            whole_thing = all_holes.fuse(cut_tower)
+            whole_thing = holes.fuse(cut_tower)
             cap = cap_plate.cut(whole_thing)
-            return cap            
+            cut_cap = cap.cut(chammed_cut)
+            return cut_cap, chammed_holed_cut            
         # if bottom:
         #     cap = cap.cut(cut_tower)
         #     bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
