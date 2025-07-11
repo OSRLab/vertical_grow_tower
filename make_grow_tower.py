@@ -325,6 +325,7 @@ class GrowTower:
         """
         make a raw tower, cut out rings, and notch.
         """
+
         raw_tower = self.make_raw_tower()
         cut_tower = self.make_em_stack(raw_tower)
 
@@ -336,7 +337,13 @@ class GrowTower:
         filleted_tower = self.chamfer_me_baby(
             cut_tower, edges=edges, cham_lens=[2.3, 2.3]
             )
-
-        return filleted_tower
+        filleted_tower2 = filleted_tower.copy()
+        filleted_tower2.translate(vec(0, 0, self.tower_height-self.cutout_height - 2.3))
+        center = vec(0,0,0)
+        rot_vec = vec(0,0,1)
+        rot_angle = 30
+        filleted_tower2.rotate(center, rot_vec, rot_angle)
+        full_tower = filleted_tower.fuse(filleted_tower2)
+        return full_tower
 
 
