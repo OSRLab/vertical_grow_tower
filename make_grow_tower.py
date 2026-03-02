@@ -1,6 +1,8 @@
-import Part, PartGui
-from FreeCAD import Base
 import math
+
+import Part
+import PartGui
+from FreeCAD import Base
 
 vec = Base.Vector
 
@@ -11,16 +13,19 @@ class GrowTower:
     Compute a few, transfering logic in here it totally okay.
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         dual=False,
+        main_thickness=6.5,
+        inner_radius=43.5,
         inner_tube_radius=24,
         tube_z_offset=4,
         tube_height=100,
         cham_len=0.5,
         bottom_cap_hole_ledge=5,
     ):
-        self.main_thickness = 6.5
-        self.inner_radius = 43.5
+        self.main_thickness = main_thickness
+        self.inner_radius = inner_radius
         self.outer_radius = self.inner_radius + self.main_thickness
         self.tower_height = 100
         self.tube_thickness = 6
@@ -29,18 +34,18 @@ class GrowTower:
         self.tube_height = tube_height
         self.destructor_radius = self.outer_tube_radius + 20
         self.destructor_height = 200
-        self.tolerance = 0.001 # one micron
+        self.tolerance = 0.001  # one micron
         self.cutout_thickness = self.main_thickness / 2
         self.cutout_height = 5
         self.bottom_ring_radius = 55
         self.move_up = self.tower_height - self.cutout_height
-        self.top_cutout_radius = self.inner_radius + \
-                                 self.cutout_thickness + \
-                                 self.tolerance/2
-        self.bottom_cutaround_radius = self.outer_radius - \
-                                       self.cutout_thickness - \
-                                       self.tolerance/2
-        self.notch_angle = math.pi/3
+        self.top_cutout_radius = (
+            self.inner_radius + self.cutout_thickness + self.tolerance / 2
+        )
+        self.bottom_cutaround_radius = (
+            self.outer_radius - self.cutout_thickness - self.tolerance / 2
+        )
+        self.notch_angle = math.pi / 3
         self.tube_angle = 45
         self.tube_x_offset = 4
         self.tube_z_offset = tube_z_offset
@@ -57,8 +62,7 @@ class GrowTower:
         self.handle_width = 2
 
     def make_cap(self, bottom=True):
-        """
-        """
+        """ """
         cut_tower = self.make_it_all()
         outer_radius = self.outer_radius
         cap_thickness = self.cap_thickness
@@ -92,26 +96,37 @@ class GrowTower:
         # end2 = Part.makeCylinder(bar_width/2, cap_thickness,
         #                    vec(0, bar_length/2, -cap_thickness/2))
 
-        cap_plate = Part.makeCylinder(outer_radius, cap_thickness,
-                    vec(0,0,-cap_thickness/2))
+        cap_plate = Part.makeCylinder(
+            outer_radius, cap_thickness, vec(0, 0, -cap_thickness / 2)
+        )
 
         # cap = cap.fuse(end1).fuse(end2).fuse(cap_plate)
         if bottom:
-            hole1 = Part.makeCylinder(hole_radius, cap_thickness,
-                vec(0, -bar_length/3 - hole_offset, -cap_thickness/2))
+            hole1 = Part.makeCylinder(
+                hole_radius,
+                cap_thickness,
+                vec(0, -bar_length / 3 - hole_offset, -cap_thickness / 2),
+            )
 
-            hole2 = Part.makeCylinder(hole_radius, cap_thickness,
-                vec(0, bar_length/3 + hole_offset, -cap_thickness/2))
-            bottom_cutout = Part.makeCylinder(30, 2*cap_thickness, vec(0,0,-cap_thickness/2) )
+            hole2 = Part.makeCylinder(
+                hole_radius,
+                cap_thickness,
+                vec(0, bar_length / 3 + hole_offset, -cap_thickness / 2),
+            )
+            bottom_cutout = Part.makeCylinder(
+                30, 2 * cap_thickness, vec(0, 0, -cap_thickness / 2)
+            )
 
             holes = hole1.fuse(hole2)
             bottom_holes = holes.fuse(bottom_cutout)
             whole_thing = bottom_holes.fuse(cut_tower)
             cap = cap_plate.cut(whole_thing)
-            # return cap
+            return cap
         else:
             # Make the viewing cap
-            cap_cutout = Part.makeCylinder(20, cap_thickness, vec(0, 0, tower_height - cap_thickness/2))
+            cap_cutout = Part.makeCylinder(
+                20, cap_thickness, vec(0, 0, tower_height - cap_thickness / 2)
+            )
             # Edge is Numero Tres
             edges = [3]
             radii = [5, 5]
@@ -119,19 +134,27 @@ class GrowTower:
 
             cap_plate.translate(vec(0, 0, tower_height))
             cut_plate = cap_plate.cut(chammed_cut)
-            top_cutout = Part.makeCylinder(5, 2*cap_thickness, vec(0,0,tower_height-cap_thickness/2))
+            top_cutout = Part.makeCylinder(
+                5, 2 * cap_thickness, vec(0, 0, tower_height - cap_thickness / 2)
+            )
             chammed_holed_cut = chammed_cut.cut(top_cutout)
 
-            hole1 = Part.makeCylinder(hole_radius, cap_thickness,
-                vec(0, -bar_length/3 - hole_offset, tower_height-cap_thickness/2))
+            hole1 = Part.makeCylinder(
+                hole_radius,
+                cap_thickness,
+                vec(0, -bar_length / 3 - hole_offset, tower_height - cap_thickness / 2),
+            )
 
-            hole2 = Part.makeCylinder(hole_radius, cap_thickness,
-                vec(0, bar_length/3 + hole_offset, tower_height-cap_thickness/2))
+            hole2 = Part.makeCylinder(
+                hole_radius,
+                cap_thickness,
+                vec(0, bar_length / 3 + hole_offset, tower_height - cap_thickness / 2),
+            )
             holes = hole1.fuse(hole2)
             whole_thing = holes.fuse(cut_tower)
             cap = cap_plate.cut(whole_thing)
             cut_cap = cap.cut(chammed_cut)
-            return cut_cap, chammed_holed_cut            
+            return cut_cap, chammed_holed_cut
         # if bottom:
         #     cap = cap.cut(cut_tower)
         #     bottom_cutout = Part.makeCylinder(bottom_cap_hole_radius, cap_thickness, vec(0,0,-cap_thickness/2) )
@@ -155,17 +178,16 @@ class GrowTower:
         #     viewhole = viewhole.fuse(handle)
         #     return cap, viewhole
 
-
     def move_tube(self, part, flip=False):
         """
         move parts into position for the tube that holds net cup.
         """
-        center = vec(0,0,0)
-        axis = vec(0,1,0)
+        center = vec(0, 0, 0)
+        axis = vec(0, 1, 0)
         angle = self.tube_angle
         x_offset = self.tube_x_offset
         z_offset = self.tube_z_offset
-        trans_vec = vec(x_offset,0,z_offset)
+        trans_vec = vec(x_offset, 0, z_offset)
         if not flip:
             part.rotate(center, axis, angle)
             part.translate(trans_vec)
@@ -173,7 +195,6 @@ class GrowTower:
             opposite_trans_vec = vec(-x_offset, 0, z_offset)
             part.rotate(center, axis, -angle)
             part.translate(opposite_trans_vec)
-
 
     def make_tube(self, flip=False):
         """
@@ -191,7 +212,6 @@ class GrowTower:
         self.move_tube(inner_tube, flip=flip)
         return outer_tube, inner_tube
 
-
     def make_destructor(self):
         """
         Make a big cylinder that sits under the planter to clean up debris.
@@ -200,11 +220,10 @@ class GrowTower:
         destructor_radius = self.destructor_radius
         destructor_height = self.destructor_height
         tube_destructor = Part.makeCylinder(destructor_radius, destructor_height)
-        tube_destructor.translate(vec(0,0,-destructor_height))
+        tube_destructor.translate(vec(0, 0, -destructor_height))
         return tube_destructor
 
-
-    def chamfer_me_baby(self, part, edges=[], cham_lens=[1.0,1.0]):
+    def chamfer_me_baby(self, part, edges=[], cham_lens=[1.0, 1.0]):
         """
         Helper function to chamfer edges given their numbers and chamfer length.
         """
@@ -226,7 +245,7 @@ class GrowTower:
         App.getDocument("Unnamed").removeObject("myPart")
         return res
 
-    def fillet_me_baby(self, part, edges=[], fillet_lens=[1.0,1.0]):
+    def fillet_me_baby(self, part, edges=[], fillet_lens=[1.0, 1.0]):
         """
         Helper function to chamfer edges given their numbers and chamfer length.
         """
@@ -250,7 +269,6 @@ class GrowTower:
 
     def chamfer_my_tube(self, tower):
         chamed_tube = self.chamfer_me_baby()
-
 
     def make_raw_tower(self):
         """
@@ -280,7 +298,6 @@ class GrowTower:
             inner_volume = inner_main.fuse(inner_tube)
             inner_volume = inner_volume.fuse(inner_tube_back)
 
-
         # Cut the volume out and leave only shell
         tower_shell_dirty = outer_shell.cut(inner_volume)
 
@@ -288,7 +305,6 @@ class GrowTower:
         tower_shell = tower_shell_dirty.cut(tube_destructor)
 
         return tower_shell
-
 
     def make_em_stack(self, tower_shell):
         """
@@ -304,7 +320,7 @@ class GrowTower:
         pan = Part.makeCylinder(top_cutout_radius, cutout_height)
         pan.translate(vec(0, 0, move_up))
         # chamfer Edge 3.
-        #cham_pan = self.chamfer_me_baby(pan, [3], cham_lens=[cham_len, cham_len])
+        # cham_pan = self.chamfer_me_baby(pan, [3], cham_lens=[cham_len, cham_len])
         cut_top = tower_shell.cut(pan)
 
         # CUT AROUND THE OUTER SURFACE ON BOTTOM. WATER GOES DOWN.
@@ -320,7 +336,6 @@ class GrowTower:
 
         return both_cut
 
-
     def make_it_all(self):
         """
         make a raw tower, cut out rings, and notch.
@@ -330,20 +345,20 @@ class GrowTower:
         cut_tower = self.make_em_stack(raw_tower)
 
         if not self.dual:
-            edges = [5,7]
+            edges = [5, 7]
         else:
-            edges = [6,14] # different designs, different edge numbers
-        
+            edges = [6, 14]  # different designs, different edge numbers
+
         filleted_tower = self.chamfer_me_baby(
             cut_tower, edges=edges, cham_lens=[2.3, 2.3]
-            )
+        )
         filleted_tower2 = filleted_tower.copy()
-        filleted_tower2.translate(vec(0, 0, self.tower_height-self.cutout_height - 2.3))
-        center = vec(0,0,0)
-        rot_vec = vec(0,0,1)
+        filleted_tower2.translate(
+            vec(0, 0, self.tower_height - self.cutout_height - 2.3)
+        )
+        center = vec(0, 0, 0)
+        rot_vec = vec(0, 0, 1)
         rot_angle = 30
         filleted_tower2.rotate(center, rot_vec, rot_angle)
         full_tower = filleted_tower.fuse(filleted_tower2)
         return full_tower
-
-
